@@ -2100,8 +2100,8 @@ entryType returns [StaticType type]
           ut2=abbreviatedType
           { tal.addType($ut2.type);
             bt.setEndToken(null); }
-        | { displayRecognitionError(getTokenNames(), 
-                new MismatchedTokenException(UIDENTIFIER, input)); }
+//        | { displayRecognitionError(getTokenNames(), 
+//                new MismatchedTokenException(UIDENTIFIER, input)); }
         )
         { $type=bt; }
       )?
@@ -2121,8 +2121,8 @@ unionType returns [StaticType type]
             it2=intersectionType
             { ut.addStaticType($it2.type);
               ut.setEndToken(null); }
-          | { displayRecognitionError(getTokenNames(), 
-                new MismatchedTokenException(UIDENTIFIER, input)); }
+//          | { displayRecognitionError(getTokenNames(), 
+//                new MismatchedTokenException(UIDENTIFIER, input)); }
           )
         )+
         { $type = ut; }
@@ -2143,8 +2143,8 @@ intersectionType returns [StaticType type]
             at2=entryType
             { it.addStaticType($at2.type);
               it.setEndToken(null); }
-          | { displayRecognitionError(getTokenNames(), 
-                new MismatchedTokenException(UIDENTIFIER, input)); }
+//          | { displayRecognitionError(getTokenNames(), 
+//                new MismatchedTokenException(UIDENTIFIER, input)); }
           )
         )+
         { $type = it; }
@@ -2152,6 +2152,7 @@ intersectionType returns [StaticType type]
     ;
 
 abbreviatedType returns [StaticType type]
+    @init { TypeArgumentList tal=null; }
     : qualifiedType
       { $type=$qualifiedType.type; }
       (
@@ -2175,14 +2176,32 @@ abbreviatedType returns [StaticType type]
           tok.setText("Sequence");
           bt = new BaseType($ARRAY);
           bt.setIdentifier( new Identifier(tok) );
-          TypeArgumentList tal = new TypeArgumentList(null);
+          tal = new TypeArgumentList(null);
           tal.addType($type);
           bt.setTypeArgumentList(tal);
           ot.addStaticType(bt);
           $type=ot; }
+      | LPAREN
+        { CommonToken tok = new CommonToken($LPAREN);
+          tok.setText("Callable");
+          BaseType bt = new BaseType($LPAREN);
+          bt.setIdentifier( new Identifier(tok) );
+          tal = new TypeArgumentList(null);
+          tal.addType($type);
+          bt.setTypeArgumentList(tal);
+          $type=bt; }
+          (
+            t1=type
+            { tal.addType($t1.type); }
+            (
+              COMMA t2=type
+              { tal.addType($t2.type); }
+            )*
+          )?
+        RPAREN
       )*
     ;
-
+    
 qualifiedType returns [SimpleType type]
     : ot=typeNameWithArguments
       { BaseType bt = new BaseType(null);
