@@ -1,6 +1,12 @@
 package com.redhat.ceylon.compiler.typechecker;
 
+import static java.lang.System.nanoTime;
+import static java.lang.System.out;
+
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Phaser;
 
 import com.redhat.ceylon.cmr.api.RepositoryManager;
 import com.redhat.ceylon.compiler.typechecker.analyzer.ModuleValidator;
@@ -27,22 +33,22 @@ public class TypeChecker {
 
     private final boolean verbose;
     private final boolean statistics;
-    private final List<VirtualFile> srcDirectories;
+    private final int threads;
     private final Context context;
     private final PhasedUnits phasedUnits;
-    private List<PhasedUnits> phasedUnitsOfDependencies;
+    private volatile List<PhasedUnits> phasedUnitsOfDependencies;
     private final boolean verifyDependencies;
     private final AssertionVisitor assertionVisitor;
     private final StatisticsVisitor statsVisitor;
 
     //package level
     TypeChecker(VFS vfs, List<VirtualFile> srcDirectories, RepositoryManager repositoryManager, boolean verifyDependencies,
-            AssertionVisitor assertionVisitor, ModuleManagerFactory moduleManagerFactory, boolean verbose, boolean statistics,
-            List<String> moduleFilters) {
+            AssertionVisitor assertionVisitor, ModuleManagerFactory moduleManagerFactory, boolean verbose, boolean statistics, 
+            int threads, List<String> moduleFilters) {
         long start = System.nanoTime();
-        this.srcDirectories = srcDirectories;
         this.verbose = verbose;
         this.statistics = statistics;
+        this.threads = threads;
         this.context = new Context(repositoryManager, vfs);
         this.phasedUnits = new PhasedUnits(context, moduleManagerFactory);
         this.verifyDependencies = verifyDependencies;
@@ -51,7 +57,7 @@ public class TypeChecker {
         phasedUnits.setModuleFilters(moduleFilters);
         phasedUnits.parseUnits(srcDirectories);
         long time = System.nanoTime()-start;
-        if(verbose)
+        if(verbose||statistics)
         	System.out.println("Parsed in " + time/1000000 + " ms");
     }
 
@@ -119,21 +125,59 @@ public class TypeChecker {
     }*/
 
     public void process() throws RuntimeException {
-        long start = System.nanoTime();
+        long start = nanoTime();
         executePhases(phasedUnits, false);
-        long time = System.nanoTime()-start;
-        if(verbose)
-        	System.out.println("Type checked in " + time/1000000 + " ms");
+        long time = nanoTime()-start;
+        if(verbose||statistics)
+        	out.println("Type checked in " + time/1000000 + " ms");
     }
 
     private void executePhases(PhasedUnits phasedUnits, boolean forceSilence) {
+        long start = nanoTime();
+
         final List<PhasedUnit> listOfUnits = phasedUnits.getPhasedUnits();
+
+        final Phaser p = new Phaser(1);
+        if (verbose||statistics) {
+            out.println("typechecking " + listOfUnits.size() + " units");
+        }
+        final ExecutorService es = Executors.newFixedThreadPool(threads);
+        for (int i=0; i<threads; i++) {
+            p.register();
+            final int ii=i;
+            es.execute(new Runnable() {
+                public void run() {
+                    p.arriveAndAwaitAdvance();
+                    for (int j=ii; j<listOfUnits.size(); j+=threads) {
+                        listOfUnits.get(j).validateTree();
+                        listOfUnits.get(j).scanDeclarations();
+                    }
+                    p.arriveAndAwaitAdvance();
+                    for (int j=ii; j<listOfUnits.size(); j+=threads) {
+                        listOfUnits.get(j).scanTypeDeclarations();
+                    }
+                    p.arriveAndAwaitAdvance();
+                    for (int j=ii; j<listOfUnits.size(); j+=threads) {
+                        listOfUnits.get(j).validateRefinement();
+                    }
+                    p.arriveAndAwaitAdvance();
+                    for (int j=ii; j<listOfUnits.size(); j+=threads) {
+                        listOfUnits.get(j).analyseTypes();
+                    }
+                    p.arriveAndAwaitAdvance();
+                    for (int j=ii; j<listOfUnits.size(); j+=threads) {
+                        listOfUnits.get(j).analyseFlow();
+                    }
+                    p.arriveAndDeregister();
+                }
+            });
+        }
 
         phasedUnits.getModuleManager().prepareForTypeChecking();
         phasedUnits.visitModules();
         phasedUnits.getModuleManager().modulesVisited();
 
-        //By now le language module version should be known (as local)
+        //By now the language module version should be known (as local)
         //or we should use the default one.
         Module languageModule = context.getModules().getLanguageModule();
         if (languageModule.getVersion() == null) {
@@ -146,22 +190,46 @@ public class TypeChecker {
         }
         phasedUnitsOfDependencies = moduleValidator.getPhasedUnitsOfDependencies();
 
+        p.arriveAndAwaitAdvance();
+        
+        while (p.getPhase()<6) {
+            start = nanoTime();
+            p.arriveAndAwaitAdvance();
+            if (verbose||statistics) {
+                out.println("step " + p.getPhase() + ": " + (nanoTime()-start)/1000000);
+            }
+        }
+        es.shutdown();
+        if (verbose||statistics) {
+            out.println("finished all");
+        }
+
+        /*if (statistics) out.println("step 0: " + (nanoTime()-start)/1000000);
+        start = nanoTime();
         for (PhasedUnit pu : listOfUnits) {
             pu.validateTree();
             pu.scanDeclarations();
         }
+        if (statistics) out.println("step 1: " + (nanoTime()-start)/1000000);
+        start = nanoTime();
         for (PhasedUnit pu : listOfUnits) {
             pu.scanTypeDeclarations();
         }
+        if (statistics) out.println("step 2: " + (nanoTime()-start)/1000000);
+        start = nanoTime();
         for (PhasedUnit pu: listOfUnits) {
             pu.validateRefinement();
         }
-        for (PhasedUnit pu : listOfUnits) {
+        if (statistics) out.println("step 3: " + (nanoTime()-start)/1000000);
+        for (PhasedUnit pu: listOfUnits) {
             pu.analyseTypes();
         }
+        if (statistics) out.println("step 4: " + (nanoTime()-start)/1000000);
+        start = nanoTime();
         for (PhasedUnit pu: listOfUnits) {
             pu.analyseFlow();
         }
+        if (statistics) out.println("step 5: " + (nanoTime()-start)/1000000);*/
 
         if (!forceSilence) {
             for (PhasedUnit pu : listOfUnits) {
@@ -172,10 +240,10 @@ public class TypeChecker {
                 pu.runAssertions(assertionVisitor);
             }
             if(verbose||statistics)
-            	statsVisitor.print();
+                statsVisitor.print();
             assertionVisitor.print(verbose);
         }
-        
+
     }
     
     public int getErrors(){

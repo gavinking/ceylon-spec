@@ -37,6 +37,7 @@ public class TypeCheckerBuilder {
     private ModuleManagerFactory moduleManagerFactory;
     private RepositoryManager repositoryManager;
     private List<String> moduleFilters = new ArrayList<String>();
+    private int threads=1;
 
     public TypeCheckerBuilder() {
     }
@@ -101,6 +102,11 @@ public class TypeCheckerBuilder {
         return this;
     }
     
+    public TypeCheckerBuilder threads(int threads) {
+        this.threads = threads;
+        return this;
+    }
+    
     public TypeCheckerBuilder moduleManagerFactory(ModuleManagerFactory moduleManagerFactory){
     	this.moduleManagerFactory = moduleManagerFactory;
     	return this;
@@ -114,7 +120,8 @@ public class TypeCheckerBuilder {
         if (repositoryManager == null) {
             repositoryManager = new RepositoryManagerBuilder( new LeakingLogger() ).buildRepository();
         }
-        return new TypeChecker(vfs, srcDirectories, repositoryManager, verifyDependencies, assertionVisitor, moduleManagerFactory, verbose, statistics, moduleFilters);
+        return new TypeChecker(vfs, srcDirectories, repositoryManager, verifyDependencies, 
+                assertionVisitor, moduleManagerFactory, verbose, statistics, threads, moduleFilters);
     }
 
 }

@@ -20,6 +20,7 @@ public class MainForTest {
         TypeChecker typeChecker = new TypeCheckerBuilder()
                 .statistics(true)
                 .verbose(false)
+                .threads(2)
                 .addSrcDirectory( new File("test/main") )
                 .getTypeChecker();
         typeChecker.process();
