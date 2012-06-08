@@ -72,16 +72,16 @@ public class DependedUponVisitor extends Visitor {
                 String dependedOnUnitName = getSrcFolderRelativePath(declarationUnit);
                 if (! dependedOnUnitName.equals(currentUnitName)) {
                     if (declarationUnit instanceof ExternalUnit) {
-                        ((ExternalUnit) declarationUnit).getDependentsOf().add(phasedUnit);
+                        ((ExternalUnit) declarationUnit).getDependentsOf().put(phasedUnit,true);
                     } else {
                         PhasedUnit dependedOnPhasedUnit = phasedUnits.getPhasedUnitFromRelativePath(dependedOnUnitName);
                         if (dependedOnPhasedUnit != null) {
-                            dependedOnPhasedUnit.getDependentsOf().add(phasedUnit);
+                            dependedOnPhasedUnit.getDependentsOf().put(phasedUnit, true);
                         } else {
                             for (PhasedUnits phasedUnitsOfDependency : phasedUnitsOfDependencies) {
                                 dependedOnPhasedUnit = phasedUnitsOfDependency.getPhasedUnitFromRelativePath(dependedOnUnitName);
                                 if (dependedOnPhasedUnit != null) {
-                                    dependedOnPhasedUnit.getDependentsOf().add(phasedUnit);
+                                    dependedOnPhasedUnit.getDependentsOf().put(phasedUnit, true);
                                     break;
                                 }
                             }

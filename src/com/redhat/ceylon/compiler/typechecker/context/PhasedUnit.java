@@ -1,8 +1,8 @@
 package com.redhat.ceylon.compiler.typechecker.context;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import org.antlr.runtime.CommonToken;
 
@@ -48,7 +48,7 @@ public class PhasedUnit {
     private final ModuleManager moduleManager;
     private final String pathRelativeToSrcDir;
     private VirtualFile unitFile;
-    private final Set<PhasedUnit> dependentsOf = new HashSet<PhasedUnit>();
+    private final Map<PhasedUnit,Boolean> dependentsOf = new WeakHashMap<PhasedUnit,Boolean>();
     private List<CommonToken> tokens;
     private ModuleVisitor moduleVisitor;
     private VirtualFile srcDir;
@@ -90,7 +90,7 @@ public class PhasedUnit {
         this.moduleManager = other.moduleManager;
         this.pathRelativeToSrcDir = other.pathRelativeToSrcDir;
         this.unitFile = other.unitFile;
-        this.dependentsOf.addAll(other.dependentsOf);
+        this.dependentsOf.putAll(other.dependentsOf);
         this.tokens = other.tokens;
         this.moduleVisitor = other.moduleVisitor;
         this.srcDir = other.srcDir;
@@ -299,7 +299,7 @@ public class PhasedUnit {
     /**
      * @return the dependentsOf
      */
-    public Set<PhasedUnit> getDependentsOf() {
+    public Map<PhasedUnit,Boolean> getDependentsOf() {
         return dependentsOf;
     }
     

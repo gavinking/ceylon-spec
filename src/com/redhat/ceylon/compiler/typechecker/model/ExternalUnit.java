@@ -1,14 +1,14 @@
 package com.redhat.ceylon.compiler.typechecker.model;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import com.redhat.ceylon.compiler.typechecker.context.PhasedUnit;
 
 public class ExternalUnit extends Unit {
-    private final Set<PhasedUnit> dependentsOf = new HashSet<PhasedUnit>();
+    private final Map<PhasedUnit,Boolean> dependentsOf = new WeakHashMap<PhasedUnit,Boolean>();
 
-    public Set<PhasedUnit> getDependentsOf() {
+    public Map<PhasedUnit,Boolean> getDependentsOf() {
         return dependentsOf;
     }
 }
