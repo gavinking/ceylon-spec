@@ -179,7 +179,7 @@ public class DeclarationVisitor extends Visitor {
                 boolean isControl;
                 do {
                     Declaration member = s.getDirectMemberOrParameter(model.getName(), null);
-                    if ( member !=null ) {
+                    if (member!=null) {
                         that.addError("duplicate declaration name: " + model.getName());
                         model.getUnit().getDuplicateDeclarations().add(member);
                     }
