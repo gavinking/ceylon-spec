@@ -275,6 +275,11 @@ public class ModuleValidator {
         }
         for (PhasedUnits units : phasedUnitsOfDependencies) {
             for (PhasedUnit pu : units.getPhasedUnits()) {
+                pu.wireTypeDeclarations();
+            }
+        }
+        for (PhasedUnits units : phasedUnitsOfDependencies) {
+            for (PhasedUnit pu : units.getPhasedUnits()) {
                 pu.scanTypeDeclarations();
             }
         }

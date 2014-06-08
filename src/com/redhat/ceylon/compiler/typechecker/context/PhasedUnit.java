@@ -19,6 +19,7 @@ import com.redhat.ceylon.compiler.typechecker.analyzer.SelfReferenceVisitor;
 import com.redhat.ceylon.compiler.typechecker.analyzer.SpecificationVisitor;
 import com.redhat.ceylon.compiler.typechecker.analyzer.SupertypeVisitor;
 import com.redhat.ceylon.compiler.typechecker.analyzer.TypeArgumentVisitor;
+import com.redhat.ceylon.compiler.typechecker.analyzer.TypeDeclarationVisitor;
 import com.redhat.ceylon.compiler.typechecker.analyzer.TypeHierarchyVisitor;
 import com.redhat.ceylon.compiler.typechecker.analyzer.TypeVisitor;
 import com.redhat.ceylon.compiler.typechecker.io.VirtualFile;
@@ -62,6 +63,7 @@ public class PhasedUnit {
     private VirtualFile srcDir;
     private boolean treeValidated = false;
     private boolean declarationsScanned = false;
+    private boolean declarationsWired = false;
     private boolean scanningDeclarations = false;
     private boolean typeDeclarationsScanned = false;
     private boolean refinementValidated = false;
@@ -184,6 +186,14 @@ public class PhasedUnit {
     public void setDeclarationsScanned(boolean declarationsScanned) {
         this.declarationsScanned = declarationsScanned;
     }
+    
+    public boolean isDeclarationsWired() {
+        return declarationsWired;
+    }
+    
+    public void setDeclarationsWired(boolean declarationsWired) {
+        this.declarationsWired = declarationsWired;
+    }
 
     public boolean isTypeDeclarationsScanned() {
         return typeDeclarationsScanned;
@@ -287,6 +297,13 @@ public class PhasedUnit {
 			compilationUnit.visit(new LiteralVisitor());
 			literalsProcessed = true;
 		}
+	}
+	
+	public void wireTypeDeclarations() {
+        if (!declarationsWired) {
+            compilationUnit.visit(new TypeDeclarationVisitor());
+            declarationsWired = true;
+        }
 	}
 
     public void scanTypeDeclarations() {

@@ -5794,6 +5794,7 @@ public class ExpressionVisitor extends Visitor {
         TypeDeclaration ut = new UnknownType(unit);
         Class ad = unit.getAnythingDeclaration();
         if (ad!=null) {
+            ut.setExtendedTypeDeclaration(ad);
             ut.setExtendedType(ad.getType());
         }
         return ut.getType();

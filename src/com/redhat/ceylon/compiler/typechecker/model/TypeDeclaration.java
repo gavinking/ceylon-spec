@@ -19,8 +19,15 @@ public abstract class TypeDeclaration extends Declaration
         implements ImportableScope, Generic, Cloneable {
 
     private ProducedType extendedType;
-    private List<ProducedType> satisfiedTypes = needsSatisfiedTypes() 
-            ? new ArrayList<ProducedType>(3) : Collections.<ProducedType>emptyList();
+    private TypeDeclaration extendedTypeDeclaration;
+    private List<ProducedType> satisfiedTypes = 
+            needsSatisfiedTypes() ? 
+                    new ArrayList<ProducedType>(3) : 
+                    Collections.<ProducedType>emptyList();
+    private List<TypeDeclaration> satisfiedTypeDeclarations = 
+            needsSatisfiedTypes() ? 
+                    new ArrayList<TypeDeclaration>(3) : 
+                    Collections.<TypeDeclaration>emptyList();
     private List<ProducedType> caseTypes = null;
     private List<TypeParameter> typeParameters = emptyList();
     private ProducedType selfType;
@@ -36,7 +43,7 @@ public abstract class TypeDeclaration extends Declaration
         // NothingType doesn't need any so we save allocation
         return true;
     }
-
+    
     public void setInconsistentType(boolean inconsistentType) {
         this.inconsistentType = inconsistentType;
     }
@@ -73,31 +80,36 @@ public abstract class TypeDeclaration extends Declaration
     }
 
     public ClassOrInterface getExtendedTypeDeclaration() {
-        ProducedType et = getExtendedType();
-		if (et==null || 
-        		!(et.getDeclaration() instanceof ClassOrInterface)) {
-            return null;
+        if (extendedTypeDeclaration instanceof ClassOrInterface) {
+            return (ClassOrInterface) extendedTypeDeclaration;
         }
         else {
-            return (ClassOrInterface) et.getDeclaration();
+            return null;
         }
     }
-
+    
+    public void setExtendedTypeDeclaration(
+            TypeDeclaration extendedTypeDeclaration) {
+        this.extendedTypeDeclaration = extendedTypeDeclaration;
+    }
+    
     public ProducedType getExtendedType() {
         return extendedType;
     }
 
     public void setExtendedType(ProducedType extendedType) {
         this.extendedType = extendedType;
+        this.extendedTypeDeclaration = extendedType.getDeclaration();
     }
 
     public List<TypeDeclaration> getSatisfiedTypeDeclarations() {
-        List<ProducedType> sts = getSatisfiedTypes();
-        List<TypeDeclaration> list = new ArrayList<TypeDeclaration>(sts.size());
-        for (ProducedType pt: sts) {
-            list.add(pt==null?null:pt.getDeclaration());
-        }
-        return list;
+        return satisfiedTypeDeclarations;
+//        List<ProducedType> sts = getSatisfiedTypes();
+//        List<TypeDeclaration> list = new ArrayList<TypeDeclaration>(sts.size());
+//        for (ProducedType pt: sts) {
+//            list.add(pt==null?null:pt.getDeclaration());
+//        }
+//        return list;
     }
 
     public List<ProducedType> getSatisfiedTypes() {
@@ -106,6 +118,11 @@ public abstract class TypeDeclaration extends Declaration
 
     public void setSatisfiedTypes(List<ProducedType> satisfiedTypes) {
         this.satisfiedTypes = satisfiedTypes;
+        satisfiedTypeDeclarations = 
+                new ArrayList<TypeDeclaration>(satisfiedTypes.size());
+        for (ProducedType st: satisfiedTypes) {
+            satisfiedTypeDeclarations.add(st.getDeclaration());
+        }
     }
 
     public List<TypeDeclaration> getCaseTypeDeclarations() {
@@ -399,6 +416,38 @@ public abstract class TypeDeclaration extends Declaration
             return d;
         }
     }
+    
+    public TypeDeclaration getMemberType(String name, Unit unit) {
+        Declaration d = unit.getImportedDeclaration(this, name, null, false);
+        if (d==null) {
+            d = getDirectMember(name, null, false);
+            if (d==null || !d.isShared()) {
+                ClassOrInterface etd = getExtendedTypeDeclaration();
+                if (etd!=null) {
+                    Declaration id = etd.getMemberType(name, unit);
+                    if (id!=null && id.isShared()) {
+                        if (id instanceof TypeDeclaration) {
+                            return (TypeDeclaration) id;
+                        }
+                    }
+                }
+                for (TypeDeclaration std: getSatisfiedTypeDeclarations()) {
+                    Declaration id = std.getMemberType(name, unit);
+                    if (id!=null && id.isShared()) {
+                        if (id instanceof TypeDeclaration) {
+                            return (TypeDeclaration) id;
+                        }
+                    }
+                }
+            }
+        }
+        if (d instanceof TypeDeclaration) {
+            return (TypeDeclaration) d;
+        }
+        else {
+            return null;
+        }
+    }
 
     /**
      * Is the most-refined member with the given name,
@@ -578,7 +627,8 @@ public abstract class TypeDeclaration extends Declaration
      * member with the given name.
      * @param signature 
      */
-    private SupertypeDeclaration getSupertypeDeclaration(final String name, final List<ProducedType> signature, final boolean variadic) {
+    private SupertypeDeclaration getSupertypeDeclaration(final String name, 
+            final List<ProducedType> signature, final boolean variadic) {
         class ExactCriteria implements ProducedType.Criteria {
             @Override
             public boolean satisfies(TypeDeclaration type) {

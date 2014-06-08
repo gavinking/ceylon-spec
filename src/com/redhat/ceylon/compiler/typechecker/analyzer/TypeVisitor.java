@@ -3,7 +3,6 @@ package com.redhat.ceylon.compiler.typechecker.analyzer;
 import static com.redhat.ceylon.compiler.typechecker.analyzer.Util.declaredInPackage;
 import static com.redhat.ceylon.compiler.typechecker.analyzer.Util.getTypeArguments;
 import static com.redhat.ceylon.compiler.typechecker.analyzer.Util.getTypeDeclaration;
-import static com.redhat.ceylon.compiler.typechecker.analyzer.Util.getTypeMember;
 import static com.redhat.ceylon.compiler.typechecker.analyzer.Util.getTypedDeclaration;
 import static com.redhat.ceylon.compiler.typechecker.model.Util.getContainingClassOrInterface;
 import static com.redhat.ceylon.compiler.typechecker.model.Util.intersectionOfSupertypes;
@@ -745,7 +744,7 @@ public class TypeVisitor extends Visitor {
             }
             TypeDeclaration d = pt.getDeclaration();
 			String name = name(that.getIdentifier());
-            TypeDeclaration type = getTypeMember(d, name, null, false, unit);
+            TypeDeclaration type = d.getMemberType(name, unit);
             if (type==null) {
                 if (d.isMemberAmbiguous(name, unit, null, false)) {
                     that.addError("member type declaration is ambiguous: " + 

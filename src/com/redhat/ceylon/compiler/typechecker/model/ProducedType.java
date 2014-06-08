@@ -661,6 +661,7 @@ public class ProducedType extends ProducedReference {
     enum SupertypeCheck {
         YES, NO, MAYBE;
     }
+    
     private static SupertypeCheck checkSupertype(TypeDeclaration declaration, TypeDeclaration supertype) {
         // fail-fast: there are only two classes that can be supertypes of an interface
         if(declaration instanceof Interface 
@@ -685,8 +686,8 @@ public class ProducedType extends ProducedReference {
                     return extended;
                 // keep looking
             }
-            for(ProducedType satisfiedType : declaration.getSatisfiedTypes()){
-                SupertypeCheck satisfied = checkSupertype(satisfiedType.getDeclaration(), supertype);
+            for(TypeDeclaration satisfiedType : declaration.getSatisfiedTypeDeclarations()){
+                SupertypeCheck satisfied = checkSupertype(satisfiedType, supertype);
                 if(satisfied == SupertypeCheck.YES)
                     return satisfied;
                 // keep looking

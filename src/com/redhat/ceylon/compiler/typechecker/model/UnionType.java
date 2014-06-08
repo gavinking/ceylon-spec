@@ -106,4 +106,9 @@ public class UnionType extends TypeDeclaration {
         }
         return true;
     }
+
+    @Override
+    protected boolean needsSatisfiedTypes() {
+        return false;
+    }
 }

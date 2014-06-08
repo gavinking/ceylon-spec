@@ -150,6 +150,9 @@ public class TypeChecker {
             pu.scanDeclarations();
         }
         for (PhasedUnit pu : listOfUnits) {
+            pu.wireTypeDeclarations();
+        }
+        for (PhasedUnit pu : listOfUnits) {
             pu.scanTypeDeclarations();
         }
         for (PhasedUnit pu: listOfUnits) {
