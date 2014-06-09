@@ -75,11 +75,6 @@ public class Class extends ClassOrInterface implements Functional {
 		this.overloaded = overloaded;
 	}
     
-    @Override
-    public Class getExtendedTypeDeclaration() {
-        return (Class) super.getExtendedTypeDeclaration();
-    }
-    
     public void setAbstraction(boolean abstraction) {
         this.abstraction = abstraction;
     }

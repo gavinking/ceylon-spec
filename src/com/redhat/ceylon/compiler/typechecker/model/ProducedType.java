@@ -617,7 +617,7 @@ public class ProducedType extends ProducedReference {
         		|| dec instanceof IntersectionType;
         boolean canCache = !complexType 
                 && !hasUnderlyingType() 
-                && ProducedTypeCache.isCachingEnabled(); 
+                && ProducedTypeCache.isCachingEnabled();
         ProducedTypeCache cache = dec.getUnit().getCache();
         if (canCache
                 && cache.containsKey(this, dec)) {
@@ -661,7 +661,7 @@ public class ProducedType extends ProducedReference {
     enum SupertypeCheck {
         YES, NO, MAYBE;
     }
-    
+    static int i=0;
     private static SupertypeCheck checkSupertype(TypeDeclaration declaration, TypeDeclaration supertype) {
         // fail-fast: there are only two classes that can be supertypes of an interface
         if(declaration instanceof Interface 
@@ -680,10 +680,21 @@ public class ProducedType extends ProducedReference {
         if(declaration instanceof Class || declaration instanceof Interface){
             if(declaration.equals(supertype))
                 return SupertypeCheck.YES;
-            if(declaration.getExtendedTypeDeclaration() != null){
-                SupertypeCheck extended = checkSupertype(declaration.getExtendedTypeDeclaration(), supertype);
-                if(extended == SupertypeCheck.YES)
-                    return extended;
+            ClassOrInterface extendedType = declaration.getExtendedTypeDeclaration();
+            if(extendedType != null){
+                try {
+                    i++;
+                    if (i>20) {
+                        System.out.println(extendedType.getName());
+                        return SupertypeCheck.NO;
+                    }
+                    SupertypeCheck extended = checkSupertype(extendedType, supertype);
+                    if(extended == SupertypeCheck.YES)
+                        return extended;
+                }
+                finally {
+                    i--;
+                }
                 // keep looking
             }
             for(TypeDeclaration satisfiedType : declaration.getSatisfiedTypeDeclarations()){

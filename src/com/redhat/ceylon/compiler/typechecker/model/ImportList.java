@@ -49,6 +49,11 @@ public class ImportList implements Scope {
     }
     
     @Override
+    public TypeDeclaration getType(String name, Unit unit) {
+        return getContainer().getType(name, unit);
+    }
+    
+    @Override
     public boolean isInherited(Declaration d) {
         return false;
     }

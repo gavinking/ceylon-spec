@@ -164,6 +164,17 @@ public class Package
     }
     
     @Override
+    public TypeDeclaration getType(String name, Unit unit) {
+        Declaration d = getMemberOrParameter(unit, name, null, false);
+        if (d instanceof TypeDeclaration) {
+            return (TypeDeclaration) d;
+        }
+        else {
+            return null;
+        }
+    }
+    
+    @Override
     public boolean isInherited(Declaration d) {
         return false;
     }

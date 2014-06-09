@@ -56,6 +56,24 @@ public abstract class Element {
         return lookupMember(getMembers(), name, signature, ellipsis);
     }
     
+    public TypeDeclaration getType(String name, Unit unit) {
+        Declaration member = getDirectMember(name, null, false);
+        if (member!=null) {
+            if (member instanceof TypeDeclaration) {
+                return (TypeDeclaration) member;
+            }
+            else {
+                return null;
+            }
+        }
+        else if (getContainer()!=null) {
+            return getContainer().getType(name, unit);
+        }
+        else {
+            return null;
+        }
+    }
+    
     /**
      * Search only this scope, including members inherited 
      * by the scope, without considering containing scopes 

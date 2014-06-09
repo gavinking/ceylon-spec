@@ -5803,7 +5803,7 @@ public class ExpressionVisitor extends Visitor {
     @Override
     public void visit(Tree.PackageLiteral that) {
         super.visit(that);
-        Package p = TypeVisitor.getPackage(that.getImportPath());
+        Package p = TypeDeclarationVisitor.getPackage(that.getImportPath());
         that.getImportPath().setModel(p);
         that.setTypeModel(unit.getPackageDeclarationType());
     }
@@ -5811,7 +5811,7 @@ public class ExpressionVisitor extends Visitor {
     @Override
     public void visit(Tree.ModuleLiteral that) {
         super.visit(that);
-        Module m = TypeVisitor.getModule(that.getImportPath());
+        Module m = TypeDeclarationVisitor.getModule(that.getImportPath());
         that.getImportPath().setModel(m);
         that.setTypeModel(unit.getModuleDeclarationType());
     }

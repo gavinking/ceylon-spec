@@ -251,6 +251,8 @@ public abstract class Node {
     
     public void handleException(Exception e, Visitor visitor) {
 	    addError(getMessage(e, visitor));
+	    e.printStackTrace();
+	    System.err.println(this.getUnit().getFilename() + ":" + this.getLocation());
     }
 
     public String getMessage(Exception e, Visitor visitor) {

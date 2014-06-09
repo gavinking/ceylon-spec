@@ -63,7 +63,9 @@ public abstract class ClassOrInterface extends TypeDeclaration {
             ret = (37 * ret) + getQualifiedNameString().hashCode();
         else{
             ret = (37 * ret) + getContainer().hashCode();
-            ret = (37 * ret) + getName().hashCode();
+            if (getName()!=null) {
+                ret = (37 * ret) + getName().hashCode();
+            }
         }
         return ret;
     }
@@ -83,7 +85,9 @@ public abstract class ClassOrInterface extends TypeDeclaration {
             if(b.isToplevel())
                 return false;
             return getContainer().equals(b.getContainer())
-                    && getName().equals(b.getName());
+                    && getName()==b.getName()
+                    || (getName()!=null && b.getName()!=null  
+                            && getName().equals(b.getName()));
         }
     }
     

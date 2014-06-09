@@ -16,6 +16,8 @@ public interface Scope {
 
     public ProducedType getDeclaringType(Declaration d);
     
+    public TypeDeclaration getType(String name, Unit unit);
+    
     /**
      * Get a member declared directly in this scope.
      */

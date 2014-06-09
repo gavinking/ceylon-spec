@@ -79,9 +79,9 @@ public abstract class TypeDeclaration extends Declaration
         this.typeParameters = typeParameters;
     }
 
-    public ClassOrInterface getExtendedTypeDeclaration() {
-        if (extendedTypeDeclaration instanceof ClassOrInterface) {
-            return (ClassOrInterface) extendedTypeDeclaration;
+    public Class getExtendedTypeDeclaration() {
+        if (extendedTypeDeclaration instanceof Class) {
+            return (Class) extendedTypeDeclaration;
         }
         else {
             return null;
@@ -99,7 +99,8 @@ public abstract class TypeDeclaration extends Declaration
 
     public void setExtendedType(ProducedType extendedType) {
         this.extendedType = extendedType;
-        this.extendedTypeDeclaration = extendedType.getDeclaration();
+        this.extendedTypeDeclaration = extendedType==null ? 
+                null : extendedType.getDeclaration();
     }
 
     public List<TypeDeclaration> getSatisfiedTypeDeclarations() {
@@ -375,8 +376,8 @@ public abstract class TypeDeclaration extends Declaration
                 new ArrayList<TypeDeclaration>());
     }
 
-    private Declaration getRefinedMember(String name, 
-            List<ProducedType> signature, boolean ellipsis, List<TypeDeclaration> visited) {
+    private Declaration getRefinedMember(String name, List<ProducedType> signature, 
+            boolean ellipsis, List<TypeDeclaration> visited) {
         if (visited.contains(this)) {
             return null;
         }
@@ -418,13 +419,22 @@ public abstract class TypeDeclaration extends Declaration
     }
     
     public TypeDeclaration getMemberType(String name, Unit unit) {
+        return getMemberType(name, unit, new ArrayList<TypeDeclaration>());
+    }
+    
+    private TypeDeclaration getMemberType(String name, Unit unit, 
+            List<TypeDeclaration> visited) {
+        if (visited.contains(this)) {
+            return null;
+        }
+        visited.add(this);
         Declaration d = unit.getImportedDeclaration(this, name, null, false);
         if (d==null) {
             d = getDirectMember(name, null, false);
             if (d==null || !d.isShared()) {
                 ClassOrInterface etd = getExtendedTypeDeclaration();
                 if (etd!=null) {
-                    Declaration id = etd.getMemberType(name, unit);
+                    Declaration id = ((TypeDeclaration)etd).getMemberType(name, unit, visited);
                     if (id!=null && id.isShared()) {
                         if (id instanceof TypeDeclaration) {
                             return (TypeDeclaration) id;
@@ -432,7 +442,7 @@ public abstract class TypeDeclaration extends Declaration
                     }
                 }
                 for (TypeDeclaration std: getSatisfiedTypeDeclarations()) {
-                    Declaration id = std.getMemberType(name, unit);
+                    Declaration id = std.getMemberType(name, unit, visited);
                     if (id!=null && id.isShared()) {
                         if (id instanceof TypeDeclaration) {
                             return (TypeDeclaration) id;
@@ -440,6 +450,36 @@ public abstract class TypeDeclaration extends Declaration
                     }
                 }
             }
+        }
+        if (d instanceof TypeDeclaration) {
+            return (TypeDeclaration) d;
+        }
+        else {
+            return null;
+        }
+    }
+
+    public TypeDeclaration getType(String name, Unit unit) {
+        Declaration d = getDirectMember(name, null, false);
+        if (d==null) {
+            ClassOrInterface etd = getExtendedTypeDeclaration();
+            if (etd!=null) {
+                Declaration id = etd.getMemberType(name, unit);
+                if (id!=null && id.isShared()) {
+                    if (id instanceof TypeDeclaration) {
+                        return (TypeDeclaration) id;
+                    }
+                }
+            }
+            for (TypeDeclaration std: getSatisfiedTypeDeclarations()) {
+                Declaration id = std.getMemberType(name, unit);
+                if (id!=null && id.isShared()) {
+                    if (id instanceof TypeDeclaration) {
+                        return (TypeDeclaration) id;
+                    }
+                }
+            }
+            d = getContainer().getType(name, unit);
         }
         if (d instanceof TypeDeclaration) {
             return (TypeDeclaration) d;
